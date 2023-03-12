@@ -36,7 +36,7 @@ def get_word_embedding_array_from_series(input_series: pd.Series) -> np.array:
     for i in range(len(input_series)):
     
         response = openai.Embedding.create(
-            input="canine companions say",
+            input=input_series.iloc[i],
             engine="text-similarity-babbage-001")
 
         store_embeddings_array[i,:] = np.asarray(response.data[0].embedding)
@@ -71,9 +71,9 @@ for scaling_col in cols_to_scale:
     df[scaling_col] = df[scaling_col] * scaling_factor_multiplier
     list_arrays_for_clustering.append(np.reshape(df[scaling_col].to_numpy(),(-1,1)))
 
-array_for_clustering = np.zeros((len(df), 3 +  2048 * 4))    
-index_to_insert_arrays = [0,1,2,3, 3 + 2048, 3 + 2048*2, 3 + 2048*3, 3 + 2048*3]
 
+# create single array of all embedded (ie from text inputs) and non-embedded arrays
+array_for_clustering = np.zeros((len(df), 3 +  2048 * 4))    
 index_to_insert_arrays = [i * 2048 for i in range(4)]
 index_to_insert_arrays.append(index_to_insert_arrays[-1] + 1)
 index_to_insert_arrays.append(index_to_insert_arrays[-1] + 1)
@@ -91,7 +91,7 @@ pca = PCA(n_components=2, svd_solver='arpack')
 reduced_results = pca.fit_transform(array_for_clustering)
 
 
-## Apply clustering with elbow method, weighting by reduced 
+## Apply clustering with elbow method
 distorsions_min = 999e6
 previous_min =  999e6
 for k in range(2, 6):
@@ -106,7 +106,7 @@ means = KMeans(n_clusters=k_best)
 clusters = means.fit(reduced_results).labels_
 
 
-## Visualise or communicate somehow
+## Visualise
 clusters = means.fit(reduced_results).labels_
 reduced_results_df = pd.DataFrame(reduced_results)
 reduced_results_df['cluster'] = clusters
